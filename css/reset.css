@@ -1,0 +1,90 @@
+*, :before, :after {
+  box-sizing: inherit;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+body {
+  background: #373737e3;
+  font-family: Arvo;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+html, body, p, ul, li, hr, h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-align: center;
+  border-bottom: 2px solid #152237e3;
+  font-family: Ubuntu Mono;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+h6 {
+  text-transform: capitalize;
+}
+
+ul {
+  list-style: none;
+}
+
+li {
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 5px 0;
+  display: flex;
+}
+
+button {
+  float: right;
+  border: 2px outset #152237e3;
+  border-radius: 3px;
+  margin: 0 5px 5px 0;
+}
+
+button.g {
+  color: #152237e3;
+  background-color: #59900de3;
+}
+
+button.d {
+  color: #59900de3;
+  background-color: #373737e3;
+}
+
+input {
+  text-align: right;
+  width: 18ch;
+  border-style: none;
+  border-radius: 5px;
+  margin: 0;
+  padding: 3px 8px;
+  font-family: Ubuntu Mono;
+  font-size: 1em;
+}
+
+input:focus {
+  outline: none;
+}
+
+img {
+  margin: 3px 8px -5px 5px;
+  position: relative;
+}
+
+span {
+  margin: 0 3px 0 8px;
+}
+
