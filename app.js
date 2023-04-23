@@ -620,7 +620,11 @@ const bs = (v)=>{
 _mithril.mount(document.body, {
     view: (v)=>{
         return _mithril(".box", [
-            _mithril(".grd -middle -around", [
+            _mithril(".grd -middle -around", {
+                style: {
+                    width: "89%"
+                }
+            }, [
                 _mithril((0, _headDefault.default)),
                 _mithril((0, _positions.pos))
             ]),
@@ -641,7 +645,11 @@ var _calc = require("./calc");
 var _calcDefault = parcelHelpers.interopDefault(_calc);
 exports.default = {
     view: (x)=>{
-        return (0, _mithrilDefault.default)(".grd -middle -around", [
+        return (0, _mithrilDefault.default)(".grd -middle -around", {
+            style: {
+                width: "100%"
+            }
+        }, [
             (0, _mithrilDefault.default)(".c -4of12 info", [
                 (0, _mithrilDefault.default)("h5", (0, _mithrilDefault.default)("img", {
                     src: "./gui/logo.png"
@@ -652,9 +660,9 @@ exports.default = {
                 ])
             ]),
             (0, _mithrilDefault.default)(".c -fill"),
-            (0, _mithrilDefault.default)((0, _tradeDefault.default)),
+            (0, _mithrilDefault.default)((0, _calcDefault.default)),
             (0, _mithrilDefault.default)(".c -fill"),
-            (0, _mithrilDefault.default)((0, _calcDefault.default))
+            (0, _mithrilDefault.default)((0, _tradeDefault.default))
         ]);
     }
 };
@@ -2423,6 +2431,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "state", ()=>state);
 parcelHelpers.export(exports, "load", ()=>load);
 parcelHelpers.export(exports, "addPosition", ()=>addPosition);
+parcelHelpers.export(exports, "editPosition", ()=>editPosition);
 parcelHelpers.export(exports, "delPosition", ()=>delPosition);
 var _mithril = require("mithril");
 var _mithrilDefault = parcelHelpers.interopDefault(_mithril);
@@ -2498,11 +2507,27 @@ const db = new iDB("tradeStuff", [
     }
 ], 1);
 const state = {
-    position: [],
+    position: [
+        {
+            id: 0,
+            eDate: null,
+            xDate: null,
+            coin: "",
+            trades: null,
+            qty: 0,
+            entry: 0,
+            exit: 0,
+            stop: 0,
+            pnl: 0
+        }
+    ],
     addP: {
+        id: null,
         eDate: null,
         xDate: null,
-        coin: ""
+        coin: null,
+        chart: null,
+        trades: null
     },
     calc: {
         risk: 0,
@@ -2525,14 +2550,40 @@ const state = {
     break: 0,
     spent: 0
 };
+function getStats(pos, x) {
+    let trades, b = 0, s = 0, bc = 0, sc = 0;
+    if (pos.trades !== null) trades = pos.trades.split("\n");
+    for(let i = 0; i < trades.length; i++){
+        const t = trades[i].split(",");
+        let bs = t[0], qty = parseFloat(t[1]), p = parseFloat(t[2]);
+        if (bs === "b") {
+            b = b + qty;
+            bc = bc + qty * p;
+        }
+        if (bs === "s") {
+            s = s + qty;
+            sc = sc + qty * p;
+        }
+    }
+    state.position[x].qty = b;
+    state.position[x].entry = (bc / b).toFixed(2);
+    state.position[x].exit = (sc / s).toFixed(2);
+    state.position[x].pnl = "$" + (sc - bc).toFixed(2) + " (" + ((sc - bc) / bc * 100).toFixed(2) + "%)";
+}
 async function load() {
     //const [products, setProducts] = useState([]);
     state.position = await db.query("position", "get");
+    for(let i = 0; i < state.position.length; i++)getStats(state.position[i], i);
     console.log("state => ", state.position);
     (0, _mithrilDefault.default).redraw();
 }
 async function addPosition(obj) {
     await db.query("position", "put", obj).then(load());
+}
+async function editPosition(obj) {
+    state.addP = obj;
+    console.log(state.addP);
+    (0, _mithrilDefault.default).redraw();
 }
 async function delPosition(i) {
     await db.query("position", "delete", i).then(load());
@@ -2590,36 +2641,97 @@ var _state = require("../db/state");
                 src: "./gui/trade.png"
             }), "add position"),
             (0, _mithrilDefault.default)("ul", [
-                (0, _mithrilDefault.default)("li", (0, _mithrilDefault.default)("span", "entry date - ", (0, _mithrilDefault.default)('input[type="date"] .d', {
-                    oninput: (e)=>(0, _state.state).addP.eDate = e.target.value,
-                    value: (0, _state.state).addP.eDate
-                }))),
-                (0, _mithrilDefault.default)("li", (0, _mithrilDefault.default)("span", "exit date - ", (0, _mithrilDefault.default)('input[type="date"] .d', {
-                    oninput: (e)=>(0, _state.state).addP.xDate = e.target.value,
-                    value: (0, _state.state).addP.xDate
-                }))),
-                (0, _mithrilDefault.default)("li", (0, _mithrilDefault.default)("span", "coin - ", (0, _mithrilDefault.default)('input[type="text"] .d', {
-                    oninput: (e)=>(0, _state.state).addP.coin = e.target.value,
-                    value: (0, _state.state).addP.coin
-                })))
+                (0, _mithrilDefault.default)("li", {
+                    style: {
+                        alignItems: "center"
+                    }
+                }, [
+                    (0, _mithrilDefault.default)("span", "coin - ", [
+                        (0, _mithrilDefault.default)('input[type="text"] .d', {
+                            oninput: (e)=>(0, _state.state).addP.coin = e.target.value.toUpperCase(),
+                            value: (0, _state.state).addP.coin
+                        }),
+                        (0, _mithrilDefault.default)("span", " - "),
+                        (0, _mithrilDefault.default)('input[type="text"] .d', {
+                            oninput: (e)=>(0, _state.state).addP.chart = e.target.value,
+                            value: (0, _state.state).addP.chart
+                        }),
+                        (0, _mithrilDefault.default)("span", " - chart")
+                    ])
+                ]),
+                (0, _mithrilDefault.default)("li", {
+                    style: {
+                        alignItems: "center"
+                    }
+                }, [
+                    (0, _mithrilDefault.default)("span", "entry - ", [
+                        (0, _mithrilDefault.default)('input[type="date"] .d', {
+                            oninput: (e)=>(0, _state.state).addP.eDate = e.target.value,
+                            value: (0, _state.state).addP.eDate
+                        }),
+                        (0, _mithrilDefault.default)("span", " - "),
+                        (0, _mithrilDefault.default)('input[type="date"] .d', {
+                            oninput: (e)=>(0, _state.state).addP.xDate = e.target.value,
+                            value: (0, _state.state).addP.xDate
+                        }),
+                        (0, _mithrilDefault.default)("span", " - exit")
+                    ])
+                ])
             ]),
+            (0, _mithrilDefault.default)("hr"),
+            (0, _mithrilDefault.default)("ul", [
+                (0, _mithrilDefault.default)("li", {
+                    style: {
+                        alignItems: "center"
+                    }
+                }, "- enter trade info -", [
+                    (0, _mithrilDefault.default)("br"),
+                    (0, _mithrilDefault.default)("span", {
+                        style: {
+                            color: "rgba(21, 34, 55, 0.89)",
+                            fontSize: "0.8em",
+                            textShadow: "none"
+                        }
+                    }, "(format: b or s,qty,cost) - (example: b,69,420)")
+                ])
+            ]),
+            (0, _mithrilDefault.default)("textarea.d", {
+                style: {
+                    boxSizing: "border-box",
+                    height: "83px",
+                    width: "calc(100% - 6px)",
+                    margin: "3px"
+                },
+                oninput: (e)=>(0, _state.state).addP.trades = e.target.value,
+                value: (0, _state.state).addP.trades
+            }),
+            (0, _mithrilDefault.default)("br"),
             (0, _mithrilDefault.default)("button.d", {
                 onclick: ()=>{
-                    let pos = {
-                        //id: state.position.length,
-                        eDate: (0, _state.state).addP.eDate,
-                        xDate: (0, _state.state).addP.xDate,
-                        coin: (0, _state.state).addP.coin,
-                        trades: [],
-                        qty: 0,
-                        entry: 0,
-                        exit: 0,
-                        stop: 0,
-                        pnl: 0
-                    };
-                    (0, _state.addPosition)(pos);
+                    if ((0, _state.state).addP.id !== null) {
+                        console.log("edit new position");
+                        (0, _state.addPosition)({
+                            id: (0, _state.state).addP.id,
+                            eDate: (0, _state.state).addP.eDate,
+                            xDate: (0, _state.state).addP.xDate,
+                            coin: (0, _state.state).addP.coin,
+                            chart: (0, _state.state).addP.chart,
+                            trades: (0, _state.state).addP.trades
+                        });
+                        Object.keys((0, _state.state).addP).forEach((k)=>(0, _state.state).addP[k] = null);
+                    } else {
+                        console.log("add new position");
+                        (0, _state.addPosition)({
+                            eDate: (0, _state.state).addP.eDate,
+                            xDate: (0, _state.state).addP.xDate,
+                            coin: (0, _state.state).addP.coin,
+                            chart: (0, _state.state).addP.chart,
+                            trades: (0, _state.state).addP.trades
+                        });
+                        Object.keys((0, _state.state).addP).forEach((k)=>(0, _state.state).addP[k] = null);
+                    }
                 }
-            }, "add position")
+            }, "add position [" + (0, _state.state).addP.id + "]")
         ]);
     }
 };
@@ -2691,7 +2803,11 @@ const chart = {
         }))
 };
 const pos = {
-    view: (v)=>(0, _mithrilDefault.default)(".grd -middle -center", [
+    view: (v)=>(0, _mithrilDefault.default)(".grd -middle -center", {
+            style: {
+                width: "100%"
+            }
+        }, [
             (0, _mithrilDefault.default)(".c -12of12 info", (0, _mithrilDefault.default)(".grd -middle -center head", [
                 (0, _mithrilDefault.default)(".c -1of12 tc rb", "ID"),
                 (0, _mithrilDefault.default)(".c -2of12 tc rb", "DATE"),
@@ -2728,19 +2844,16 @@ const pos = {
                                 position: "relative",
                                 margin: "0",
                                 left: "8px",
-                                height: "24px"
+                                height: "24px",
+                                cursor: "pointer"
                             },
-                            onclick: ()=>(0, _state.addPosition)({
+                            onclick: ()=>(0, _state.editPosition)({
                                     id: x.id,
                                     eDate: x.eDate,
                                     xDate: x.xDate,
                                     coin: x.coin,
-                                    qty: x.qty,
-                                    entry: x.entry,
-                                    exit: x.exit,
-                                    stop: x.stop,
-                                    pnl: x.pnl,
-                                    chart: "https://www.tradingview.com/x/k77fyDDr"
+                                    chart: x.chart,
+                                    trades: x.trades
                                 })
                         }),
                         (0, _mithrilDefault.default)("img", {
@@ -2749,7 +2862,8 @@ const pos = {
                                 position: "relative",
                                 margin: "-31px 24px 24px 31px",
                                 left: "8px",
-                                height: "24px"
+                                height: "24px",
+                                cursor: "pointer"
                             },
                             onclick: ()=>(0, _state.delPosition)({
                                     id: x.id

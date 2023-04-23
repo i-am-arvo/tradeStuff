@@ -13,7 +13,7 @@
 .chart {
   width: 100vw;
   height: 100vh;
-  background: #000c;
+  background: #152237e3;
   justify-content: center;
   align-items: center;
   display: flex;
@@ -62,7 +62,6 @@
 }
 
 .head {
-  width: 1383px;
   border-bottom: 3px solid #152237e3;
 }
 
@@ -79,7 +78,7 @@ input.g {
   background-color: #59900de3;
 }
 
-input.d {
+input.d, textarea.d {
   color: #59900de3;
   background-color: #373737e3;
 }
